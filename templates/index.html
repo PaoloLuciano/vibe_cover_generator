@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vibe Cover Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 40px;
+            font-size: 1.1em;
+        }
+
+        .upload-section {
+            border: 3px dashed #ddd;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 30px;
+            transition: border-color 0.3s ease;
+        }
+
+        .upload-section:hover {
+            border-color: #667eea;
+        }
+
+        .upload-section.dragover {
+            border-color: #667eea;
+            background-color: #f8f9ff;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .upload-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: transform 0.2s ease;
+        }
+
+        .upload-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .color-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .color-control label {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .color-control input {
+            padding: 8px 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            width: 80px;
+        }
+
+        .extract-btn {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: transform 0.2s ease;
+        }
+
+        .extract-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .extract-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .selected-files {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .file-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .palette-container {
+            margin-top: 30px;
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            display: none;
+        }
+
+        .palette-title {
+            text-align: center;
+            margin-bottom: 25px;
+            font-size: 1.5em;
+            color: #333;
+        }
+
+        .color-palette {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .color-swatch {
+            text-align: center;
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            transition: transform 0.2s ease;
+        }
+
+        .color-swatch:hover {
+            transform: translateY(-3px);
+        }
+
+        .color-box {
+            width: 100%;
+            height: 80px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border: 2px solid #eee;
+        }
+
+        .color-info {
+            font-size: 0.9em;
+        }
+
+        .color-hex {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .color-rgb {
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .color-percentage {
+            color: #888;
+            font-size: 0.8em;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+
+        .error {
+            background: #ffe6e6;
+            color: #cc0000;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .color-palette {
+                grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 Vibe Cover Generator</h1>
+        <p class="subtitle">Extract the perfect color palette from your images</p>
+        
+        <div class="upload-section" id="uploadSection">
+            <p style="margin-bottom: 20px; color: #666;">Drop your images here or click to select</p>
+            <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
+                Choose Images
+            </button>
+            <input type="file" id="fileInput" multiple accept="image/*">
+            <p style="margin-top: 15px; font-size: 0.9em; color: #888;">
+                Supports PNG, JPG, JPEG, GIF, BMP, TIFF
+            </p>
+        </div>
+
+        <div class="selected-files" id="selectedFiles" style="display: none;">
+            <h3 style="margin-bottom: 15px;">Selected Files:</h3>
+            <div id="fileList"></div>
+        </div>
+
+        <div class="controls">
+            <div class="color-control">
+                <label for="colorCount">Number of colors:</label>
+                <input type="number" id="colorCount" min="2" max="20" value="5">
+            </div>
+            <button class="extract-btn" id="extractBtn" onclick="extractColors()" disabled>
+                Extract Colors
+            </button>
+        </div>
+
+        <div class="error" id="errorMessage" style="display: none;"></div>
+        
+        <div class="palette-container" id="paletteContainer">
+            <h2 class="palette-title">Your Color Palette</h2>
+            <div class="color-palette" id="colorPalette"></div>
+        </div>
+    </div>
+
+    <script>
+        let selectedFiles = [];
+
+        const fileInput = document.getElementById('fileInput');
+        const uploadSection = document.getElementById('uploadSection');
+        const selectedFilesDiv = document.getElementById('selectedFiles');
+        const fileList = document.getElementById('fileList');
+        const extractBtn = document.getElementById('extractBtn');
+        const paletteContainer = document.getElementById('paletteContainer');
+        const colorPalette = document.getElementById('colorPalette');
+        const errorMessage = document.getElementById('errorMessage');
+
+        // File input change handler
+        fileInput.addEventListener('change', handleFileSelect);
+
+        // Drag and drop handlers
+        uploadSection.addEventListener('dragover', handleDragOver);
+        uploadSection.addEventListener('dragleave', handleDragLeave);
+        uploadSection.addEventListener('drop', handleDrop);
+        uploadSection.addEventListener('click', () => fileInput.click());
+
+        function handleFileSelect(e) {
+            const files = Array.from(e.target.files);
+            updateSelectedFiles(files);
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            uploadSection.classList.add('dragover');
+        }
+
+        function handleDragLeave(e) {
+            e.preventDefault();
+            uploadSection.classList.remove('dragover');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            uploadSection.classList.remove('dragover');
+            const files = Array.from(e.dataTransfer.files);
+            updateSelectedFiles(files);
+        }
+
+        function updateSelectedFiles(files) {
+            selectedFiles = files.filter(file => file.type.startsWith('image/'));
+            
+            if (selectedFiles.length === 0) {
+                selectedFilesDiv.style.display = 'none';
+                extractBtn.disabled = true;
+                return;
+            }
+
+            fileList.innerHTML = '';
+            selectedFiles.forEach((file, index) => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item';
+                fileItem.innerHTML = `
+                    <span>📷</span>
+                    <span>${file.name}</span>
+                    <span style="margin-left: auto; color: #666;">${(file.size / 1024 / 1024).toFixed(2)} MB</span>
+                `;
+                fileList.appendChild(fileItem);
+            });
+
+            selectedFilesDiv.style.display = 'block';
+            extractBtn.disabled = false;
+            hideError();
+        }
+
+        function extractColors() {
+            if (selectedFiles.length === 0) return;
+
+            const formData = new FormData();
+            selectedFiles.forEach(file => {
+                formData.append('files', file);
+            });
+            formData.append('n_colors', document.getElementById('colorCount').value);
+
+            extractBtn.disabled = true;
+            extractBtn.textContent = 'Extracting...';
+            paletteContainer.style.display = 'none';
+            hideError();
+
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    displayPalette(data.palette);
+                } else {
+                    showError(data.error || 'Failed to extract colors');
+                }
+            })
+            .catch(error => {
+                showError('Network error: ' + error.message);
+            })
+            .finally(() => {
+                extractBtn.disabled = false;
+                extractBtn.textContent = 'Extract Colors';
+            });
+        }
+
+        function displayPalette(palette) {
+            colorPalette.innerHTML = '';
+            
+            palette.forEach((color, index) => {
+                const swatch = document.createElement('div');
+                swatch.className = 'color-swatch';
+                swatch.innerHTML = `
+                    <div class="color-box" style="background-color: ${color.hex}"></div>
+                    <div class="color-info">
+                        <div class="color-hex">${color.hex}</div>
+                        <div class="color-rgb">RGB(${color.rgb[0]}, ${color.rgb[1]}, ${color.rgb[2]})</div>
+                        <div class="color-percentage">${color.percentage}%</div>
+                    </div>
+                `;
+                
+                swatch.addEventListener('click', () => {
+                    navigator.clipboard.writeText(color.hex).then(() => {
+                        const originalText = swatch.querySelector('.color-hex').textContent;
+                        swatch.querySelector('.color-hex').textContent = 'Copied!';
+                        setTimeout(() => {
+                            swatch.querySelector('.color-hex').textContent = originalText;
+                        }, 1000);
+                    });
+                });
+                
+                colorPalette.appendChild(swatch);
+            });
+
+            paletteContainer.style.display = 'block';
+        }
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+        }
+
+        function hideError() {
+            errorMessage.style.display = 'none';
+        }
+    </script>
+</body>
+</html>
